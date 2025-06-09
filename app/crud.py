@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from uuid import UUID
 from . import models, schemas
+from datetime import datetime
 
 def create_user(db: Session, user: schemas.UserCreate):
     db_user = models.User(**user.dict())
@@ -14,6 +15,25 @@ def get_user(db: Session, user_id: UUID):
 
 def list_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
+
+def create_message(db: Session, message: schemas.MessageCreate, sender_id: UUID = None):
+    # Nếu sender_id không truyền vào, lấy từ message
+    if sender_id is None:
+        sender_id = message.sender_id
+    db_message = models.Message(
+        sender_id=sender_id,
+        subject=message.subject,
+        content=message.content
+    )
+    db.add(db_message)
+    db.commit()
+    db.refresh(db_message)
+    # Thêm các recipient
+    for rid in message.recipient_ids:
+        db_recipient = models.MessageRecipient(message_id=db_message.id, recipient_id=rid)
+        db.add(db_recipient)
+    db.commit()
+    return db_message
 
 def send_message(db: Session, message: schemas.MessageCreate, sender_id: UUID):
     db_message = models.Message(**message.dict(), sender_id=sender_id)
@@ -47,3 +67,6 @@ def get_unread_messages(db: Session, recipient_id: UUID):
             .join(models.MessageRecipient)
             .filter(models.MessageRecipient.recipient_id == recipient_id,
                     models.MessageRecipient.read == False).all())
+
+def get_message(db: Session, message_id: UUID):
+    return db.query(models.Message).filter(models.Message.id == message_id).first()

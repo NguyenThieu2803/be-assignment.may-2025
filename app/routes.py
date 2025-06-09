@@ -49,7 +49,11 @@ def view_message(message_id: uuid.UUID, db: Session = Depends(get_db)):
     message = crud.get_message(db=db, message_id=message_id)
     if message is None:
         raise HTTPException(status_code=404, detail="Message not found")
-    return message
+    recipient_ids = [mr.recipient_id for mr in message.recipients]
+    return {
+        **message.__dict__,
+        "recipient_ids": recipient_ids
+    }
 
 @router.post("/messages/{message_id}/read", response_model=schemas.Message)
 def mark_message_as_read(message_id: uuid.UUID, db: Session = Depends(get_db)):
