@@ -12,18 +12,18 @@ jobs:
 
     services:
       postgres:
-        image: postgres:17
+        image: postgres:15
         env:
-          POSTGRES_USER: admin
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: 123456
-          POSTGRES_DB: postgres
+          POSTGRES_DB: messaging_system
         ports:
           - 5432:5432
         options: >-
           --health-cmd="pg_isready -U admin" --health-interval=10s --health-timeout=5s --health-retries=5
 
     env:
-      DATABASE_URL: postgresql://admin:123456@localhost:5432/messaging_system
+      DATABASE_URL: postgresql://postgres:123456@localhost:5432/messaging_system
       SECRET_KEY: test_secret
       DEBUG: "True"
       PORT: 8000
